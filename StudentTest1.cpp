@@ -52,14 +52,21 @@ TEST_CASE("AscendingIterator") {
 
     SUBCASE("Iterating over elements") {
         MagicalContainer::AscendingIterator it(container);
+        cout<<*it<<endl;
         CHECK(*it == 10);
+        CHECK(it!=it.end());
+        cout<<"~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
         ++it;
+        cout<<*it<<endl;
         CHECK(*it == 15);
         ++it;
+        cout<<*it<<endl;
         CHECK(*it == 20);
         ++it;
+        cout<<*it<<endl;
         CHECK(*it == 25);
         ++it;
+        cout<<*it<<endl;
         CHECK(*it == 30);
         ++it;
         CHECK(it == it.end());
@@ -137,7 +144,22 @@ TEST_CASE("Comparing iterators from the same container") {
 
     SUBCASE("Comparing AscendingIterator with itself") {
         MagicalContainer::AscendingIterator it1(container);
+        cout<< " it1:"<<*it1<<endl;
+        for(auto over_ascending = it1; over_ascending!= it1.end(); ++over_ascending){
+            cout<<*over_ascending<<" ";
+        }
+        cout<<endl;
+        cout<<*it1<<endl;
+
         MagicalContainer::AscendingIterator it2(container);
+
+        cout<< " it2:"<<*it2<<endl;
+        for(auto over_ascending = it2; over_ascending!= it2.end(); ++over_ascending){
+            cout<<*over_ascending<<" ";
+        }
+        cout<<endl;
+        cout<<*it2<<endl;
+
         CHECK(it1 == it2);
         CHECK(!(it1 != it2));
         CHECK(!(it1 < it2));
@@ -321,33 +343,36 @@ TEST_CASE("Comparing PrimeIterator") {
         CHECK_FALSE((it1 != it2));
         CHECK_FALSE((it1 > it2));
         CHECK_FALSE((it1 < it2));
-
+cout<<"1: "<<it1 << " , "<< it2<<endl;
         ++it1;
         CHECK_FALSE((it1 == it2));
         CHECK((it1 != it2));
         CHECK_FALSE((it1 < it2));
         CHECK((it1 > it2));
-
+cout<<"2 "<<it1 << " , "<< it2<<endl;
         ++it2;
         CHECK((it1 == it2));
         CHECK_FALSE((it1 != it2));
         CHECK_FALSE((it1 > it2));
         CHECK_FALSE((it1 < it2));
-
+cout<<"3 "<<it1 << " , "<< it2<<endl;
         ++it1;
         CHECK_FALSE((it1 == it2));
         CHECK((it1 != it2));
         CHECK((it1 > it2));
         CHECK_FALSE((it1 < it2));
-
+cout<<"4 "<<it1 << " , "<< it2<<endl;
         ++it2;
         CHECK((it1 == it2));
         CHECK_FALSE((it1 != it2));
         CHECK_FALSE((it1 > it2));
         CHECK_FALSE((it1 < it2));
-
+cout<<"5 "<<it1 << " , "<< it2<<endl;
         CHECK(it1 == it1.end());
+cout<<"5.5\n";
         CHECK(it2 == it2.end());
+
+cout<<"6\n";
     }
 }
 
@@ -448,7 +473,9 @@ TEST_CASE("Multiple Iterators Test") {
     container.addElement(9);
 
     SUBCASE("Ascending Iterators") {
+        cout<<"asce it1:"<<endl;
         MagicalContainer::AscendingIterator it1(container);
+        cout<<"asce it2:"<<endl;
         MagicalContainer::AscendingIterator it2(container);
 
         ++(++it1);
@@ -476,17 +503,27 @@ TEST_CASE("Multiple Iterators Test") {
     }
 
     SUBCASE("Prime Iterators") {
+        cout<<"it1:"<<endl;
         MagicalContainer::PrimeIterator it1(container);
+        cout<<"it2:"<<endl;
         MagicalContainer::PrimeIterator it2(container);
-
-        ++it1;
+        for(auto temp = it2;temp!=it2.end();++temp){
+            cout<<temp<<" ,";
+        }
+        cout<<endl;
+// cout<<it1<<" , "<<it2<<endl;
+        ++it1; //3
         CHECK(*it1 == 3);
         CHECK(*it2 == 2);
-        ++it2;
-        ++it1;
+// cout<<it1<<" , "<<it2<<endl;
+        ++it2; //3
+        ++it1; //5
         CHECK(*it2 == 3);
         CHECK(*it1 == 5);
+// cout<<it1<<" , "<<it2<<endl;
         ++(++it2);
+// cout<<it1<<" , "<<it2<<endl;
+
         CHECK(*it2 == 7);
     }
 }
