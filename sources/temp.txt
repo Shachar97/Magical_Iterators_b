@@ -1,0 +1,1801 @@
+#ifndef MAGICAL_CONTAINER_HPP
+#define MAGICAL_CONTAINER_HPP
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include "prime.hpp"
+
+using namespace std;
+
+namespace ariel{
+    class MagicalContainer
+    {
+    private:
+    vector<int>* magic_;
+        
+    public:
+
+    /*~~~~~~~AscendingIterator~~~~~~~~~*/
+    class AscendingIterator
+    {
+    private:
+        vector<int>* ascIter_;
+        size_t currentIndex_;
+    public:
+        AscendingIterator(MagicalContainer magic)
+            :ascIter_(new vector<int>),currentIndex_(0){/*TODO: build insert linklist of magic (deep copy)*/
+            *ascIter_=*(magic.magic_); // O(n)
+
+            if(ascIter_->size()>1){
+                sort(ascIter_->begin(),ascIter_->end()); // O(nlog(n))
+            }
+        }
+
+        AscendingIterator& operator=(const AscendingIterator& other) {
+            if (this != &other) {
+                ascIter_ = other.ascIter_;
+                currentIndex_ = other.currentIndex_;
+            }
+            return *this;
+        }
+
+        AscendingIterator(const AscendingIterator& other)
+            : ascIter_(other.ascIter_), currentIndex_(other.currentIndex_){
+        }
+        
+
+        ~AscendingIterator(){
+            delete ascIter_;
+        }
+
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const AscendingIterator& it) {
+            os << *it;  
+            return os;
+        }
+
+        int operator*() const {
+                return (*ascIter_)[currentIndex_];
+        }
+
+        AscendingIterator& operator++() {
+            ++currentIndex_;
+            return *this;
+        }
+            
+        AscendingIterator operator++(int) {
+            AscendingIterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        AscendingIterator& operator--() {
+            --currentIndex_;
+            return *this;
+        }
+            
+        AscendingIterator operator--(int) {
+            AscendingIterator temp = *this;
+            --(*this);
+            return temp;
+        }
+
+        bool operator==(const AscendingIterator& other) const {
+            // return currentIndex_ == other.currentIndex_;
+            return &*this == &other;
+        }
+
+        bool operator!=(const AscendingIterator& other) const {
+            return !(*this == other);
+        }
+
+        bool operator==(const vector<int>::iterator other) const {
+            return *this == other;
+        }
+
+        bool operator!=(const vector<int>::iterator other) const {
+            return !(*this == other);
+        }
+
+        bool operator<(const AscendingIterator &other) const {
+            return currentIndex_ < other.currentIndex_;
+        }
+
+        bool operator>(const AscendingIterator &other) const {
+            return currentIndex_ > other.currentIndex_;
+        }
+
+        bool operator<=(const AscendingIterator &other) const {
+            return currentIndex_ <= other.currentIndex_;
+        }
+
+        bool operator>=(const AscendingIterator &other) const {
+            return currentIndex_ >= other.currentIndex_;
+        }
+
+
+
+        vector<int>::iterator begin(){
+            return ascIter_->begin();
+        }
+        vector<int>::iterator end(){
+            return ascIter_->end();
+        }
+
+        void addElement(int data){/*TODO*/
+            if(ascIter_->size()==0){
+                ascIter_->push_back(data);
+            }else{
+                auto it = std::lower_bound(ascIter_->begin(), ascIter_->end(), data);
+                ascIter_->insert(it,data);
+            }
+            
+        }
+    };
+
+    /*~~~~~~~SideCrossIterator~~~~~~~~~*/
+    class SideCrossIterator
+    {
+    private:
+    vector<int>* sideIter_;
+    size_t currentIndex_;
+              
+    public:
+        SideCrossIterator(MagicalContainer magic)
+            :sideIter_(new vector<int>),currentIndex_(0){
+            
+            if(magic.size()!=0){
+                if (magic.size()==1){
+                    sideIter_->push_back(magic.magic_->front());
+                }else{
+                    if(magic.ascendIter_){
+                        auto st = magic.ascendIter_->begin();
+                        auto en = magic.ascendIter_->end() - 1;
+                        while (st < en) {
+                            sideIter_->push_back(*st);
+                            sideIter_->push_back(*en);
+                            ++st;
+                            --en;
+                        }
+                        // Handle the middle element for odd-sized containers
+                        if (st == en) {
+                            sideIter_->push_back(*st);
+                        }
+                    }else{
+                        vector<int> temp=*(magic.magic_);
+                        sort(temp.begin(),temp.end());
+
+                        auto st = temp.begin();
+                        auto en = temp.end() - 1;
+                        while (st < en) {
+                            sideIter_->push_back(*st);
+                            sideIter_->push_back(*en);
+                            ++st;
+                            --en;
+                        }
+                        // Handle the middle element for odd-sized containers
+                        if (st == en) {
+                            sideIter_->push_back(*st);
+                        }
+                    }
+                    
+                }
+            }
+        }
+
+        SideCrossIterator& operator=(const SideCrossIterator& other) {
+            if (this != &other) {
+                sideIter_ = other.sideIter_;
+                currentIndex_ = other.currentIndex_;
+            }
+            return *this;
+        }
+
+        SideCrossIterator(const SideCrossIterator& other)
+            : sideIter_(other.sideIter_), currentIndex_(other.currentIndex_){
+        }
+
+        ~SideCrossIterator(){
+            delete sideIter_;
+        }
+
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const SideCrossIterator& it) {
+            os << it;  
+            return os;
+        }
+
+        int operator*() const {
+                return (*sideIter_)[currentIndex_];
+        }
+
+        SideCrossIterator& operator++() {
+            ++currentIndex_;
+            return *this;
+        }
+            
+        SideCrossIterator operator++(int) {
+            SideCrossIterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        SideCrossIterator& operator--() {
+            --currentIndex_;
+            return *this;
+        }
+            
+        SideCrossIterator operator--(int) {
+            SideCrossIterator temp = *this;
+            --(*this);
+            return temp;
+        }
+
+        bool operator==(const SideCrossIterator& other) const {
+            return &*this == &other;
+        }
+
+        bool operator!=(const SideCrossIterator& other) const {
+            return !(*this == other);
+        }
+
+        bool operator==(const vector<int>::iterator other) const {
+            return *this == other;
+        }
+
+        bool operator!=(const vector<int>::iterator other) const {
+            return !(*this == other);
+        }
+
+        bool operator<(const SideCrossIterator &other) const {
+            return currentIndex_ < other.currentIndex_;
+        }
+
+        bool operator>(const SideCrossIterator &other) const {
+            return currentIndex_ > other.currentIndex_;
+        }
+
+        bool operator<=(const SideCrossIterator &other) const {
+            return currentIndex_ <= other.currentIndex_;
+        }
+
+        bool operator>=(const SideCrossIterator &other) const {
+            return currentIndex_ >= other.currentIndex_;
+        }
+
+        vector<int>::iterator begin(){
+            return sideIter_->begin();
+        }
+        vector<int>::iterator end(){
+            return sideIter_->end();
+        }
+        void addElement(int data){/*TODO*/
+            if(sideIter_->size()==0){
+                sideIter_->push_back(data);
+            }else{
+                bool flag = true;
+                auto it = sideIter_->begin();
+                while(it != sideIter_->end()){
+                    if(flag){
+                        if(data<*it){
+                            /*INSERT DATA*/
+                            sideIter_->insert(it,data);
+                            return;
+                        }
+                        flag = false;
+                        ++it;
+                    }else{
+                        if(data>*it){
+                            /*INSERT DATA*/
+                            sideIter_->insert(it,data);
+                            return;
+                        }
+                        flag = true;
+                        ++it;
+                    }
+                }
+                sideIter_->push_back(data);
+            }
+        }
+    };
+
+    /*~~~~~~~PrimeIterator~~~~~~~~~*/
+    class PrimeIterator
+    {
+    private:
+        vector<int>* primeIter_;
+        size_t currentIndex_;
+        
+    public:
+        PrimeIterator(MagicalContainer magic)
+            :primeIter_(new vector<int>),currentIndex_(0){
+            if(magic.magic_->size()>0){
+                
+                auto it = magic.magic_->begin();
+                while(it != magic.magic_->end()){
+                    
+                    if(isPrime(*it)){
+                        
+                        primeIter_->push_back(*it);
+                    }
+                    ++it;
+                }
+                sort(primeIter_->begin(),primeIter_->end());
+            }
+        }
+
+        PrimeIterator& operator=(const PrimeIterator& other) {
+            if (this != &other) {
+                primeIter_ = other.primeIter_;
+                currentIndex_ = other.currentIndex_;
+            }
+            return *this;
+        }
+
+        PrimeIterator(const PrimeIterator& other)
+            : primeIter_(other.primeIter_), currentIndex_(other.currentIndex_){
+        }
+
+        ~PrimeIterator(){
+            delete primeIter_;
+        }
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const PrimeIterator& it) {
+            os << it;  
+            return os;
+        }
+
+                int operator*() const {
+                return (*primeIter_)[currentIndex_];
+        }
+
+        PrimeIterator& operator++() {
+            ++currentIndex_;
+            return *this;
+        }
+            
+        PrimeIterator operator++(int) {
+            PrimeIterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        PrimeIterator& operator--() {
+            --currentIndex_;
+            return *this;
+        }
+            
+        PrimeIterator operator--(int) {
+            PrimeIterator temp = *this;
+            --(*this);
+            return temp;
+        }
+
+        bool operator==(const PrimeIterator& other) const {
+            return &*this == &other;
+        }
+
+        bool operator!=(const PrimeIterator& other) const {
+            return !(*this == other);
+        }
+
+        bool operator==(const vector<int>::iterator other) const {
+            return *this == other;
+        }
+
+        bool operator!=(const vector<int>::iterator other) const {
+            return !(*this == other);
+        }
+
+        bool operator<(const PrimeIterator &other) const {
+            return currentIndex_ < other.currentIndex_;
+        }
+
+        bool operator>(const PrimeIterator &other) const {
+            return currentIndex_ > other.currentIndex_;
+        }
+
+        bool operator<=(const PrimeIterator &other) const {
+            return currentIndex_ <= other.currentIndex_;
+        }
+
+        bool operator>=(const PrimeIterator &other) const {
+            return currentIndex_ >= other.currentIndex_;
+        }
+
+        vector<int>::iterator begin(){
+            return primeIter_->begin();
+        }
+        vector<int>::iterator end(){
+            return primeIter_->end();
+        }
+        void addElement(int data){/*TODO*/
+            if(isPrime(data)){
+                if(primeIter_->size()==0){
+                    primeIter_->push_back(data);
+                }else{
+                    auto it = primeIter_->begin();
+                    while(it != primeIter_->end()){
+                        if(data<*it){
+                            /*INSERT DATA*/
+                            primeIter_->insert(it,data);
+                            return;
+                        }
+                        ++it;
+                    }
+                    primeIter_->push_back(data);
+                }
+            }
+        }
+    };
+    
+    /*~~~~~~~MagicalContainer~~~~~~~~~*/
+    private:
+        
+        AscendingIterator* ascendIter_;
+        SideCrossIterator* sideIter_;
+        PrimeIterator* primeIter_;
+
+    public:
+        MagicalContainer():magic_(new vector<int>),ascendIter_(nullptr),sideIter_(nullptr),primeIter_(nullptr){}
+        ~MagicalContainer(){}
+        void addElement(int data){/*TODO*/
+
+            magic_->push_back(data);
+
+            /*AscendingIterator*/
+            if(ascendIter_){/*TODO*/
+                ascendIter_->addElement(data);
+            }
+
+            /*SideCrossIterator*/
+            if(sideIter_){/*TODO*/
+                sideIter_->addElement(data);
+            }
+
+            /*PrimeIterator*/
+            if(primeIter_){/*TODO*/
+                primeIter_->addElement(data);
+            }
+
+            return;
+        }
+        void removeElement(int data){/*TODO*/
+            auto it = std::find(magic_->begin(), magic_->end(), data);
+
+            // Check if the element was found
+            if (it != magic_->end()) {
+                // Remove the element from the vector
+                magic_->erase(it);
+            }else{
+                throw runtime_error("not exist element");
+            }
+        }
+
+        int size() const {/*TODO*/return magic_->size();}
+        vector<int>::iterator begin(){
+            return magic_->begin();
+        }
+        vector<int>::iterator end(){
+            return magic_->end();
+        }
+    };
+    
+}
+
+#endif
+
+vector<int>::iterator begin(){
+            return begin_;
+        }
+        vector<int>::iterator end(){
+            return end_;
+        }
+
+
+
+
+#############################################################
+
+#ifndef MAGICAL_CONTAINER_HPP
+#define MAGICAL_CONTAINER_HPP
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include "prime.hpp"
+
+using namespace std;
+
+namespace ariel{
+    class MagicalContainer
+    {
+    private:
+    vector<int >* magic_;
+        
+    public:
+
+    /*~~~~~~~AscendingIterator~~~~~~~~~*/
+    class AscendingIterator
+    {
+    private:
+    vector<int>::iterator * it_;
+    vector<int>::iterator begin_;
+    vector<int>::iterator end_;
+    MagicalContainer * magical_;
+
+public:
+    AscendingIterator(MagicalContainer& magic):magical_(&magic)
+    {
+        if(magic.size()!=0){
+            vector<int> temp(magic.begin(), magic.end());
+            sort(temp.begin(), temp.end());
+
+            // Initialize the iterators
+            it_ = new vector<int>::iterator(magic.magic_->begin());
+            begin_ = *it_;
+            end_ = *it_;
+
+            cout<<"the container:"<<endl;
+            for (auto over_container=magic.begin(); over_container != magic.end(); ++over_container)
+            {
+               cout<<*over_container<<", ";
+            }
+            cout<<endl<<"~~~~"<<endl;
+
+            // Copy the sorted values into the initialized iterators
+            for (auto over_temp = temp.begin(); over_temp != temp.end(); ++over_temp)
+            {
+                **it_ = *over_temp;
+                ++*it_;
+                ++end_;
+            }
+
+            cout<<"the container:"<<endl;
+            for (auto over_container=magic.begin(); over_container != magic.end(); ++over_container)
+            {
+               cout<<*over_container<<", ";
+            }
+            cout<<endl<<"~~~~"<<endl;
+
+            // Reset the iterator position to the beginning
+            *it_ = begin_;
+        }else{
+
+            // Initialize the iterators
+            it_ = new vector<int>::iterator(magic.magic_->begin());
+            begin_ = *it_;
+            end_ = *it_;
+        }
+        
+    }
+
+    AscendingIterator(const AscendingIterator& other)
+    {
+        if(other.it_ != nullptr){
+            it_ = new vector<int>::iterator(*other.it_);
+
+            begin_ = *it_;
+            end_ = *it_;
+            
+            // Copy the sorted values into the initialized iterators
+            for (auto over_temp = other.begin_; over_temp != other.end_; ++over_temp)
+            {
+                **it_ = *over_temp;
+                ++*it_;
+                ++end_;
+            }
+
+            // Reset the iterator position to the beginning
+            *it_ = begin_;
+        }else{
+            // Initialize the iterators
+            it_ = new vector<int>::iterator(other.begin_);
+            begin_ = *it_;
+            end_ = *it_;
+        }
+        
+    }
+
+    ~AscendingIterator()
+    {
+        if(it_){
+            delete it_;
+        }
+    }
+
+    AscendingIterator& operator=(const AscendingIterator& other)
+    {
+        if (this != &other)
+        {   
+            if(it_){
+                delete it_;
+            }
+            if(other.it_){
+                it_ = new vector<int>::iterator(*other.it_);
+
+                begin_ = *it_;
+                end_ = *it_;
+                
+                // Copy the sorted values into the initialized iterators
+                for (auto over_temp = other.begin_; over_temp != other.end_; ++over_temp)
+                {
+                    **it_ = *over_temp;
+                    ++*it_;
+                    ++end_;
+                }
+
+                // Reset the iterator position to the beginning
+                *it_ = begin_;
+            }else{
+                it_=nullptr;
+                begin_=end_;
+            }
+            
+        }
+
+        return *this;
+    }
+
+    friend ostream& operator<<(ostream& os, const AscendingIterator& it) 
+        {
+            os << *(*it.it_);
+            return os;
+        }
+
+    int operator*() const
+    {
+        if(!it_){
+            throw runtime_error("operator*: no elements");
+        }
+        return **it_;
+    }
+
+    AscendingIterator& operator++()
+    {
+        if(*it_>=end_){
+            throw runtime_error("operator++: out of bound");
+        }
+        ++(*it_);
+        return *this;
+    }
+
+    AscendingIterator operator++(int)
+    {   
+        if(*it_>=end_){
+            throw runtime_error("operator++: out of bound");
+        }
+        AscendingIterator temp(*this);
+        ++(*it_);
+        return temp;
+    }
+
+    AscendingIterator& operator--()
+    {
+        if(*it_<=begin_){
+            throw runtime_error("operator--: out of bound");
+        }
+        --(*it_);
+        return *this;
+    }
+
+    AscendingIterator operator--(int)
+    {
+        if(*it_<=begin_){
+            throw runtime_error("operator--: out of bound");
+        }
+        AscendingIterator temp(*this);
+        --(*it_);
+        return temp;
+    }
+
+    bool operator==(const AscendingIterator& other) const
+    {
+        if(!it_){
+            throw runtime_error("operator==: no elements");
+        }
+        return *it_ == *other.it_;
+    }
+
+    bool operator!=(const AscendingIterator& other) const
+    {
+        if(!it_){
+            throw runtime_error("operator!= no elements");
+        }
+        return !(*this == other);
+    }
+
+    // bool operator==(const vector<int>::iterator other) const
+    // {
+    //     return *it_ == other;
+    // }
+
+    // bool operator!=(const vector<int>::iterator other) const
+    // {
+    //     return !(*it_ == other);
+    // }
+
+    bool operator<(const AscendingIterator& other) const
+    {
+        if(!it_){
+            throw runtime_error("operator<: no elements");
+        }
+        return *it_ < *other.it_;
+    }
+
+    bool operator>(const AscendingIterator& other) const
+    {
+        if(!it_){
+            throw runtime_error("operator> no elements");
+        }
+        return *it_ > *other.it_;
+    }
+
+    bool operator<=(const AscendingIterator& other) const
+    {
+        if(!it_){
+            throw runtime_error("operator<= no elements");
+        }
+        return *it_ <= *other.it_;
+    }
+
+    bool operator>=(const AscendingIterator& other) const
+    {
+        if(!it_){
+            throw runtime_error("operator>= no elements");
+        }
+        return *it_ >= *other.it_;
+    }   
+
+    AscendingIterator & begin(){
+        *it_=begin_;
+        return *this;
+    }
+
+    AscendingIterator & end(){
+        *it_=end_;
+        return *this;
+    }
+
+    void addElement(int data)
+    {
+        if(it_==nullptr){
+            it_ = new vector<int>::iterator;
+            **it_=data;
+            begin_=*it_;
+            ++(*it_);
+            end_=*it_;
+            *it_=begin_;
+            return;
+        }
+        if(data < *begin_){
+            --begin_;
+            *begin_=data;
+        }else if(data > *(end_-1)){
+            *end_=data;
+            ++end_;
+        }else{
+            vector<int>::iterator temp_1;
+            temp_1=begin_;
+            while(data>*temp_1){
+                ++temp_1;
+            }
+            
+            int temp_2;
+            while(temp_1 != end_){
+                temp_2=*temp_1;
+                *temp_1=data;
+                data=temp_2;
+                ++temp_1;
+            }
+            *end_=data;
+            ++end_;
+
+        }
+    }
+    };
+
+
+    /*~~~~~~~SideCrossIterator~~~~~~~~~*/
+    class SideCrossIterator
+    {
+    private:
+
+    vector<int>::iterator * it_;
+    vector<int>::iterator begin_;
+    vector<int>::iterator end_;
+    MagicalContainer * magical_;
+              
+    public:
+        SideCrossIterator(MagicalContainer& magic): magical_(&magic)
+        {
+            if(magic.size()!=0){
+
+                vector<int> temp(magic.begin(), magic.end());
+                sort(temp.begin(), temp.end());
+
+                // Initialize the iterators
+                it_ = new vector<int>::iterator(magic.magic_->begin());
+                begin_ = *it_;
+                end_ = *it_;
+
+                    
+                auto st = temp.begin();
+                auto en = temp.end() - 1;
+                while (st < en) {
+
+                    /*add min val*/
+                    **it_=*st;
+                    ++*it_;
+                    ++end_;
+
+                    /*add max val*/
+                    **it_=*en;
+                    ++*it_;
+                    ++end_;
+
+                    /*promote st & en*/
+                    ++st;
+                    --en;
+                }
+                // Handle the middle element for odd-sized containers
+                if (st == en) {
+                    **it_=*st;
+                    ++*it_;
+                    ++end_;
+                }
+    
+                // Reset the iterator position to the beginning
+                *it_ = begin_;
+
+            }else{
+                // Initialize the iterators
+                it_ = new vector<int>::iterator(magic.magic_->begin());
+                begin_ = *it_;
+                end_ = *it_;
+            }
+        }
+
+        SideCrossIterator& operator=(const SideCrossIterator& other) {
+            if (this != &other) {
+                delete it_;
+                it_ = new vector<int>::iterator(*other.it_);
+
+                begin_ = *it_;
+                end_ = *it_;
+                
+                // Copy the sorted values into the initialized iterators
+                for (auto over_temp = other.begin_; over_temp != other.end_; ++over_temp)
+                {
+                    **it_ = *over_temp;
+                    ++*it_;
+                    ++end_;
+                }
+
+                // Reset the iterator position to the beginning
+                *it_ = begin_;
+            }
+            return *this;
+        }
+
+        SideCrossIterator(const SideCrossIterator& other){
+            it_ = new vector<int>::iterator(*other.it_);
+
+            begin_ = *it_;
+            end_ = *it_;
+            
+            // Copy the sorted values into the initialized iterators
+            for (auto over_temp = other.begin_; over_temp != other.end_; ++over_temp)
+            {
+                **it_ = *over_temp;
+                ++*it_;
+                ++end_;
+            }
+
+            // Reset the iterator position to the beginning
+            *it_ = begin_;
+        }
+
+        ~SideCrossIterator(){
+            delete it_;
+        }
+
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const SideCrossIterator& it) 
+        {
+            os << *(*it.it_);
+            return os;
+        }
+
+        int operator*() const {
+            return (**it_);
+        }
+
+        SideCrossIterator& operator++() {
+            if(*it_>=end_){
+                throw runtime_error("operator++: out of bound");
+            }
+            ++(*it_);
+            return *this;
+        }
+            
+        SideCrossIterator operator++(int) {
+            if(*it_>=end_){
+                throw runtime_error("operator++: out of bound");
+            }
+            SideCrossIterator temp(*this);
+            ++(*it_);
+            return temp;
+        }
+
+        SideCrossIterator& operator--() {
+            
+            if(*it_<=begin_){
+                throw runtime_error("operator--: out of bound");
+            }
+
+            --(*it_);
+            return *this;
+        }
+            
+        SideCrossIterator operator--(int) {
+
+            if(*it_<=begin_){
+                throw runtime_error("operator--: out of bound");
+            }
+
+            SideCrossIterator temp (*this);
+            --(*it_);
+            return temp;
+        }
+
+        bool operator==(const SideCrossIterator& other) const {
+            return *it_ == *other.it_;
+        }
+
+        bool operator!=(const SideCrossIterator& other) const {
+            return !(*it_ == *other.it_);
+        }
+
+        // bool operator==(const vector<int>::iterator other) const {
+        //     return *this->it_ == other;
+        // }
+
+        // bool operator!=(const vector<int>::iterator other) const {
+        //     return !(*this->it_ == other);
+        // }
+
+        bool operator<(const SideCrossIterator &other) const {
+            return *it_ < *other.it_;
+        }
+
+        bool operator>(const SideCrossIterator &other) const {
+            return *it_ > *other.it_;
+        }
+
+        bool operator<=(const SideCrossIterator &other) const {
+            return *it_ <= *other.it_;
+        }
+
+        bool operator>=(const SideCrossIterator &other) const {
+            return *it_ >= *other.it_;
+        }
+
+        SideCrossIterator & begin(){
+            *it_=begin_;
+            return *this;
+        }
+        SideCrossIterator & end(){
+            *it_=end_;
+            return *this;
+        }
+
+        void addElement(int data){/*TODO*/
+            // if(sideIter_->size()==0){
+            //     sideIter_->push_back(data);
+            // }else{
+            //     bool flag = true;
+            //     auto it = sideIter_->begin();
+            //     while(it != sideIter_->end()){
+            //         if(flag){
+            //             if(data<*it){
+            //                 /*INSERT DATA*/
+            //                 sideIter_->insert(it,data);
+            //                 return;
+            //             }
+            //             flag = false;
+            //             ++it;
+            //         }else{
+            //             if(data>*it){
+            //                 /*INSERT DATA*/
+            //                 sideIter_->insert(it,data);
+            //                 return;
+            //             }
+            //             flag = true;
+            //             ++it;
+            //         }
+            //     }
+            //     sideIter_->push_back(data);
+            // }
+        }
+    };
+
+    /*~~~~~~~PrimeIterator~~~~~~~~~*/
+    class PrimeIterator
+    {
+    private:
+
+        vector<int>::iterator * it_;
+        vector<int>::iterator begin_;
+        vector<int>::iterator end_;
+        MagicalContainer * magical_;
+        
+    public:
+    PrimeIterator(MagicalContainer& magic):magical_(&magic)
+    {
+        if (magic.magic_->size() != 0)
+        {
+            vector<int> temp(magic.begin(), magic.end());
+            sort(temp.begin(), temp.end());
+
+            // Initialize the iterators
+            it_ = new vector<int>::iterator(magic.magic_->begin());
+            begin_ = *it_;
+            end_ = *it_;
+
+            auto over_temp = temp.begin();
+
+            cout<<"the container:"<<endl;
+            for (auto over_container=magic.begin(); over_container != magic.end(); ++over_container)
+            {
+               cout<<*over_container<<", ";
+            }
+            cout<<endl<<"~~~~"<<endl;
+            cout<<"constructor: "<<endl;
+            for (; over_temp != temp.end(); ++over_temp)
+            {
+                if (isPrime(*over_temp))
+                {
+                    cout<<*over_temp<<", ";
+                    **it_ = *over_temp;
+                    ++(*it_);
+                    ++end_;
+                }
+            }
+            cout<<endl<<"~~~~"<<endl;;
+                
+
+            // Reset the iterator position to the beginning
+            *it_ = begin_;
+            cout<<"the container:"<<endl;
+            for (auto over_container=magic.begin(); over_container != magic.end(); ++over_container)
+            {
+               cout<<*over_container<<", ";
+            }
+            cout<<endl<<"~~~~"<<endl;
+
+        }
+        else
+        {
+            // Initialize the iterators
+            it_ = new vector<int>::iterator(magic.magic_->begin());
+            begin_ = *it_;
+            end_ = *it_;
+        }
+    }
+
+
+        PrimeIterator& operator=(const PrimeIterator& other) {
+            if (this != &other) {
+                delete it_;
+                it_ = new vector<int>::iterator(*other.it_);
+
+                begin_ = *it_;
+                end_ = *it_;
+                
+                // Copy the sorted values into the initialized iterators
+                for (auto over_temp = other.begin_; over_temp != other.end_; ++over_temp)
+                {
+                    **it_ = *over_temp;
+                    ++*it_;
+                    ++end_;
+                }
+
+                // Reset the iterator position to the beginning
+                *it_ = begin_;
+            }
+            return *this;
+        }
+
+        PrimeIterator(const PrimeIterator& other){
+            it_ = new vector<int>::iterator(*other.it_);
+
+            begin_ = *it_;
+            end_ = *it_;
+            
+            // Copy the sorted values into the initialized iterators
+            for (auto over_temp = other.begin_; over_temp != other.end_; ++over_temp)
+            {
+                **it_ = *over_temp;
+                ++*it_;
+                ++end_;
+            }
+
+            // Reset the iterator position to the beginning
+            *it_ = begin_;
+        }
+
+        ~PrimeIterator(){
+            delete it_;
+        }
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const PrimeIterator& it)
+        {
+            os << *(*it.it_);
+            return os;
+        }
+
+        int operator*() const {
+            return **(it_);
+        }
+
+        PrimeIterator& operator++() {
+
+            if(*it_>=end_){
+                throw runtime_error("operator++: out of bound");
+            }
+            ++(*it_);
+            return *this;
+        }
+                
+        PrimeIterator operator++(int) {
+
+            if(*it_>=end_){
+                throw runtime_error("operator++: out of bound");
+            }
+
+            PrimeIterator temp(*this);
+            ++(*it_);
+            return temp;
+        }
+
+    PrimeIterator& operator--() {
+        if(*it_<=begin_){
+            throw runtime_error("operator--: out of bound");
+        }
+        --(*it_);
+        return *this;
+    }
+        
+    PrimeIterator operator--(int) {
+        if(*it_<=begin_){
+            throw runtime_error("operator--: out of bound");
+        }
+        PrimeIterator temp (*this);
+        --(*it_);
+        return temp;
+    }
+        
+
+        bool operator==(const PrimeIterator& other) const {
+            return *it_ == *other.it_;
+        }
+
+        bool operator!=(const PrimeIterator& other) const {
+            return !(*this == other);
+        }
+
+        // bool operator==(const vector<int>::iterator other) const {
+        //     return *this->it_ == other;
+        // }
+
+        // bool operator!=(const vector<int>::iterator other) const {
+        //     return !(*this->it_ == other);
+        // }
+
+        bool operator<(const PrimeIterator &other) const {
+            return *it_ < *other.it_;
+        }
+
+        bool operator>(const PrimeIterator &other) const {
+            return *it_ > *other.it_;
+        }
+
+        bool operator<=(const PrimeIterator &other) const {
+            return *it_ <= *other.it_;
+        }
+
+        bool operator>=(const PrimeIterator &other) const {
+            return *it_ >= *other.it_;
+        }
+
+        PrimeIterator& begin(){
+            *it_=begin_;
+            return *this;
+        }
+        PrimeIterator& end(){
+            *it_=end_;
+            return *this;
+        }
+
+        void addElement(int data){/*TODO*/
+            // if(isPrime(data)){
+            //     if(primeIter_->size()==0){
+            //         primeIter_->push_back(data);
+            //     }else{
+            //         auto it = primeIter_->begin();
+            //         while(it != primeIter_->end()){
+            //             if(data<*it){
+            //                 /*INSERT DATA*/
+            //                 primeIter_->insert(it,data);
+            //                 return;
+            //             }
+            //             ++it;
+            //         }
+            //         primeIter_->push_back(data);
+            //     }
+            // }
+        }
+    };
+    
+    /*~~~~~~~MagicalContainer~~~~~~~~~*/
+    private:
+        
+        AscendingIterator* ascendIter_;
+        SideCrossIterator* sideIter_;
+        PrimeIterator* primeIter_;
+
+    public:
+        MagicalContainer():magic_(new vector<int>),ascendIter_(nullptr),sideIter_(nullptr),primeIter_(nullptr){}
+        ~MagicalContainer(){}
+        void addElement(int data){/*TODO*/
+
+            magic_->push_back(data);
+
+            /*AscendingIterator*/
+            if(ascendIter_){/*TODO*/
+                ascendIter_->addElement(data);
+            }
+
+            /*SideCrossIterator*/
+            if(sideIter_){/*TODO*/
+                sideIter_->addElement(data);
+            }
+
+            /*PrimeIterator*/
+            if(primeIter_){/*TODO*/
+                primeIter_->addElement(data);
+            }
+
+            return;
+        }
+        void removeElement(int data){/*TODO*/
+            auto it = std::find(magic_->begin(), magic_->end(), data);
+
+            // Check if the element was found
+            if (it != magic_->end()) {
+                // Remove the element from the vector
+                magic_->erase(it);
+            }else{
+                throw runtime_error("not exist element");
+            }
+        }
+
+        int size() const {/*TODO*/return magic_->size();}
+        vector<int>::iterator begin(){
+            return magic_->begin();
+        }
+        vector<int>::iterator end(){
+            return magic_->end();
+        }
+    };
+    
+}
+
+#endif
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+#ifndef MAGICAL_CONTAINER_HPP
+#define MAGICAL_CONTAINER_HPP
+
+#include <iostream>
+#include <vector>
+#include <iterator>
+#include <algorithm>
+
+#include "prime.hpp"
+
+
+
+using namespace std;
+
+
+namespace ariel{
+bool compareByValue(const int* a, const int* b);
+    class MagicalContainer
+    {
+    private:
+    vector<int > container_;
+        
+    public:
+
+    /*~~~~~~~AscendingIterator~~~~~~~~~*/
+    class AscendingIterator
+    {
+    private:
+    vector<int *>::iterator  it_;
+    std::vector<int *> * sortedContainer_;
+    MagicalContainer& container_;
+
+public:
+    
+    AscendingIterator(MagicalContainer& container);
+    
+
+    AscendingIterator(const AscendingIterator& other);
+
+    ~AscendingIterator();
+
+    AscendingIterator& operator=(const AscendingIterator& other);
+
+
+    friend ostream& operator<<(ostream& os, const AscendingIterator& it)
+    {
+        os << **(it.it_);
+        return os;
+    }
+    
+
+    int operator*() const;
+
+    AscendingIterator& operator++();
+
+    AscendingIterator operator++(int);
+
+    AscendingIterator& operator--();
+
+    AscendingIterator operator--(int);
+
+    bool operator==(const AscendingIterator& other) const;
+
+    bool operator!=(const AscendingIterator& other) const;
+
+    bool operator<(const AscendingIterator& other) const;
+
+    bool operator>(const AscendingIterator& other) const;
+    
+    bool operator<=(const AscendingIterator& other) const;
+
+    bool operator>=(const AscendingIterator& other) const;
+    
+
+    AscendingIterator begin();
+
+    AscendingIterator end();
+
+    void addElement(int data);
+    
+    };
+
+
+    /*~~~~~~~SideCrossIterator~~~~~~~~~*/
+    class SideCrossIterator
+    {
+    private:
+
+    vector<int *>::iterator  it_;
+    std::vector<int *> sidedContainer_;
+    MagicalContainer& container_;
+              
+    public:
+        SideCrossIterator(MagicalContainer& container): container_(container)
+        {
+            if(container_.size()!=0){
+
+                for(auto over_container=container_.begin(); over_container != container_.end(); ++over_container){
+                    sidedContainer_.push_back(&(*over_container));
+                }   
+                    
+                sort(sidedContainer_.begin(),sidedContainer_.end(),compareByValue);
+
+                    
+                // Initialize the iterators
+                it_ = sidedContainer_.begin();
+
+                auto temp =sidedContainer_;
+                    
+                auto st = temp.begin();
+                auto en = temp.end() - 1;
+                while (st < en) {
+
+                    /*add min val*/
+                    *it_=*st;
+                    ++it_;
+
+                    /*add max val*/
+                    *it_=*en;
+                    ++it_;
+
+                    /*promote st & en*/
+                    ++st;
+                    --en;
+                }
+
+                // Handle the middle element for odd-sized containers
+                if (st == en) {
+                    *it_=*st;
+                    ++it_;
+                }
+        
+                // Reset the iterator position to the beginning
+                it_ = sidedContainer_.begin();
+            }
+        }
+
+        SideCrossIterator& operator=(const SideCrossIterator& other) {
+            if (this != &other) {
+                this->container_=other.container_;
+                this->sidedContainer_=other.sidedContainer_;
+                this->it_=other.it_;
+            }
+            return *this;
+        }
+
+        SideCrossIterator(const SideCrossIterator& other) :container_(other.container_),sidedContainer_(other.sidedContainer_),it_(other.it_){
+        }
+
+
+        ~SideCrossIterator(){
+        }
+
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const SideCrossIterator& it) 
+        {
+            os << *(it.it_);
+            return os;
+        }
+
+        int operator*() const {
+            return *(*it_);
+        }
+
+        SideCrossIterator& operator++() {
+            if(it_==sidedContainer_.end()){
+                throw runtime_error("S operator++: out of bound");
+            }
+            ++(it_);
+            return *this;
+        }
+            
+        SideCrossIterator operator++(int) {
+            if(it_==sidedContainer_.end()){
+                throw runtime_error("S operator++: out of bound");
+            }
+            SideCrossIterator temp(*this);
+            ++(it_);
+            return temp;
+        }
+
+        SideCrossIterator& operator--() {
+            
+            if(it_==sidedContainer_.begin()){
+                throw runtime_error("S operator--: out of bound");
+            }
+
+            --(it_);
+            return *this;
+        }
+            
+        SideCrossIterator operator--(int) {
+
+            if(it_==sidedContainer_.begin()){
+                throw runtime_error("S operator--: out of bound");
+            }
+
+            SideCrossIterator temp (*this);
+            --(it_);
+            return temp;
+        }
+
+        bool operator==(const SideCrossIterator& other) const {
+            return it_ == other.it_;
+        }
+
+        bool operator!=(const SideCrossIterator& other) const {
+            return !(it_ == other.it_);
+        }
+
+        bool operator<(const SideCrossIterator &other) const {
+            return it_ < other.it_;
+        }
+
+        bool operator>(const SideCrossIterator &other) const {
+            return it_ > other.it_;
+        }
+
+        bool operator<=(const SideCrossIterator &other) const {
+            return it_ <= other.it_;
+        }
+
+        bool operator>=(const SideCrossIterator &other) const {
+            return it_ >= other.it_;
+        }
+
+        SideCrossIterator & begin(){
+            it_=sidedContainer_.begin();
+            return *this;
+        }
+        SideCrossIterator & end(){
+            it_=sidedContainer_.end();
+            return *this;
+        }
+
+        void addElement(int data){/*TODO*/
+            // if(sideIter_->size()==0){
+            //     sideIter_->push_back(data);
+            // }else{
+            //     bool flag = true;
+            //     auto it = sideIter_->begin();
+            //     while(it != sideIter_->end()){
+            //         if(flag){
+            //             if(data<*it){
+            //                 /*INSERT DATA*/
+            //                 sideIter_->insert(it,data);
+            //                 return;
+            //             }
+            //             flag = false;
+            //             ++it;
+            //         }else{
+            //             if(data>*it){
+            //                 /*INSERT DATA*/
+            //                 sideIter_->insert(it,data);
+            //                 return;
+            //             }
+            //             flag = true;
+            //             ++it;
+            //         }
+            //     }
+            //     sideIter_->push_back(data);
+            // }
+        }
+    };
+
+    /*~~~~~~~PrimeIterator~~~~~~~~~*/
+    class PrimeIterator
+    {
+    private:
+
+        vector<int >::iterator  it_;
+        std::vector<int > primeContainer_;
+        MagicalContainer& container_;
+        
+    public:
+    PrimeIterator(MagicalContainer& container) : container_(container)
+    {
+        cout<<"the container:"<<endl;
+        for (auto over_container=container.begin(); over_container != container.end(); ++over_container)
+        {
+            cout<<*over_container<<", ";
+        }
+        for (auto it = container.begin(); it != container.end(); ++it)
+        {
+            if (isPrime(*it))
+            {
+                primeContainer_.push_back(*it);
+            }
+        }
+        cout<<"the container:"<<endl;
+        for (auto over_container=container.begin(); over_container != container.end(); ++over_container)
+        {
+            cout<<*over_container<<", ";
+        }
+
+        // Sort the primedMagic_ vector
+        sort(primeContainer_.begin(), primeContainer_.end());
+
+        // Initialize the iterator
+        it_ = primeContainer_.begin();
+    }
+
+
+        PrimeIterator& operator=(const PrimeIterator& other) {
+            if (this != &other) {
+                this->container_ = other.container_;
+                this->primeContainer_ = other.primeContainer_;
+                this->it_=other.it_;
+            }
+            return *this;
+        }
+
+        PrimeIterator(const PrimeIterator& other):container_(other.container_),primeContainer_(other.primeContainer_),it_(other.it_){
+        }
+
+        ~PrimeIterator(){
+        }
+        /*
+        TODO OPERATORS
+        */
+        friend ostream& operator<<(ostream& os, const PrimeIterator& it)
+        {
+            os << *(it.it_);
+            return os;
+        }
+
+        int operator*() const {
+            return *(it_);
+        }
+
+        PrimeIterator& operator++() {
+
+            if(it_>=primeContainer_.end()){
+                throw runtime_error("operator++: out of bound");
+            }
+            ++(it_);
+            return *this;
+        }
+                
+        PrimeIterator operator++(int) {
+
+            if(it_>=primeContainer_.end()){
+                throw runtime_error("operator++: out of bound");
+            }
+
+            PrimeIterator temp(*this);
+            ++(it_);
+            return temp;
+        }
+
+    PrimeIterator& operator--() {
+        if(it_<=primeContainer_.begin()){
+            throw runtime_error("operator--: out of bound");
+        }
+        --(it_);
+        return *this;
+    }
+        
+    PrimeIterator operator--(int) {
+        if(it_<=primeContainer_.begin()){
+            throw runtime_error("operator--: out of bound");
+        }
+        PrimeIterator temp (*this);
+        --(it_);
+        return temp;
+    }
+        
+
+        bool operator==(const PrimeIterator& other) const {
+            return it_ == other.it_;
+        }
+
+        bool operator!=(const PrimeIterator& other) const {
+            return !(*this == other);
+        }
+
+        bool operator<(const PrimeIterator &other) const {
+            return it_ < other.it_;
+        }
+
+        bool operator>(const PrimeIterator &other) const {
+            return it_ > other.it_;
+        }
+
+        bool operator<=(const PrimeIterator &other) const {
+            return it_ <= other.it_;
+        }
+
+        bool operator>=(const PrimeIterator &other) const {
+            return it_ >= other.it_;
+        }
+
+        PrimeIterator& begin(){
+            it_=primeContainer_.begin();
+            return *this;
+        }
+        PrimeIterator& end(){
+            it_=primeContainer_.end();
+            return *this;
+        }
+
+        void addElement(int data){/*TODO*/
+            // if(isPrime(data)){
+            //     if(primeIter_->size()==0){
+            //         primeIter_->push_back(data);
+            //     }else{
+            //         auto it = primeIter_->begin();
+            //         while(it != primeIter_->end()){
+            //             if(data<*it){
+            //                 /*INSERT DATA*/
+            //                 primeIter_->insert(it,data);
+            //                 return;
+            //             }
+            //             ++it;
+            //         }
+            //         primeIter_->push_back(data);
+            //     }
+            // }
+        }
+    };
+    
+    /*~~~~~~~MagicalContainer~~~~~~~~~*/
+    private:
+        
+        AscendingIterator* ascendIter_;
+        SideCrossIterator* sideIter_;
+        PrimeIterator* primeIter_;
+
+    public:
+        MagicalContainer():ascendIter_(nullptr),sideIter_(nullptr),primeIter_(nullptr){}
+        ~MagicalContainer(){}
+        void addElement(int data){/*TODO*/
+
+            container_.push_back(data);
+
+            /*AscendingIterator*/
+            if(ascendIter_){/*TODO*/
+                ascendIter_->addElement(data);
+            }
+
+            /*SideCrossIterator*/
+            if(sideIter_){/*TODO*/
+                sideIter_->addElement(data);
+            }
+
+            /*PrimeIterator*/
+            if(primeIter_){/*TODO*/
+                primeIter_->addElement(data);
+            }
+
+            return;
+        }
+        void removeElement(int data){/*TODO*/
+            auto it = std::find(container_.begin(), container_.end(), data);
+
+            // Check if the element was found
+            if (it != container_.end()) {
+                // Remove the element from the vector
+                container_.erase(it);
+            }else{
+                throw runtime_error("not exist element");
+            }
+        }
+        bool operator==(const MagicalContainer& other) const{
+            return container_ == other.container_;
+        }
+
+        int size() const {/*TODO*/return container_.size();}
+        vector<int>::iterator begin(){
+            return container_.begin();
+        }
+        vector<int>::iterator end(){
+            return container_.end();
+        }
+    };
+    
+bool compareByValue(const int* a, const int* b) {
+    return *a < *b;
+}
+}
+
+
+#endif
