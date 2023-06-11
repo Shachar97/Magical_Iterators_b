@@ -16,8 +16,9 @@ ariel::MagicalContainer::AscendingIterator::AscendingIterator(ariel::MagicalCont
         for(auto over_container=container_.begin(); over_container != container_.end(); ++over_container){
             sortedContainer_->push_back(&(*over_container));
         }
+        sortedContainer_->push_back(&(*container_.end()));
         
-        sort(sortedContainer_->begin(), sortedContainer_->end(),compareByValue);
+        sort(sortedContainer_->begin(), sortedContainer_->end()-1,compareByValue);
         // for(auto over_container=sortedContainer_->begin(); over_container!= sortedContainer_->end(); ++over_container){
         //     cout << **over_container << endl;
         // }
@@ -36,8 +37,17 @@ ariel::MagicalContainer::AscendingIterator::AscendingIterator(const ariel::Magic
         sortedContainer_->push_back(*it_);
     }
     it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *(other.it_));
+    // it_=other.it_;
     cout<<*sortedContainer_->end()<<" , "<<*other.sortedContainer_->end()<<endl;
     cout << "@@@@@@@@@@@"<<endl;
+}
+
+ariel::MagicalContainer::AscendingIterator::AscendingIterator(const AscendingIterator& other, std::vector<int*>::iterator it)
+    : container_(other.container_) {
+    sortedContainer_ = new std::vector<int*>(*other.sortedContainer_);
+    cout<<"it: "<<*it<<endl;
+    this->it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *it);
+    cout<<"it: "<<*it<<endl;
 }
 
 
@@ -54,9 +64,15 @@ ariel::MagicalContainer::AscendingIterator& ariel::MagicalContainer::AscendingIt
 
         delete sortedContainer_;
 
-        sortedContainer_ = new std::vector<int*>(*other.sortedContainer_);
+        sortedContainer_ = new std::vector<int*>;
+        for(it_=other.sortedContainer_->begin(); it_!= other.sortedContainer_->end(); ++it_){
+            sortedContainer_->push_back(*it_);
+        }
+        // it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *(other.it_));
+        it_=other.it_;
+        
 
-        it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *(other.it_));
+        
     }
 
     return *this;
@@ -125,7 +141,7 @@ bool ariel::MagicalContainer::AscendingIterator::operator==(const ariel::Magical
 bool ariel::MagicalContainer::AscendingIterator::operator!=(const ariel::MagicalContainer::AscendingIterator& other) const {
     cout<<"A in operator!="<<endl;
     if (this->container_ == other.container_) {
-        cout << *(this->it_) << " ? " << *(other.it_) << endl;
+        // cout << *(this->it_) << " ? " << *(other.it_) << endl;
         return *it_ != *other.it_;
     } else {
         throw runtime_error("A operator!=: not the same container");
@@ -133,7 +149,7 @@ bool ariel::MagicalContainer::AscendingIterator::operator!=(const ariel::Magical
 }
 
 
-bool ariel::MagicalContainer::AscendingIterator::operator<(const ariel::MagicalContainer::AscendingIterator &other) const
+bool ariel::MagicalContainer::AscendingIterator::operator<(const ariel::MagicalContainer::AscendingIterator other) const
 {
     if(this->container_==other.container_){
         return it_ < other.it_;
@@ -142,7 +158,7 @@ bool ariel::MagicalContainer::AscendingIterator::operator<(const ariel::MagicalC
     }
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator>(const ariel::MagicalContainer::AscendingIterator &other) const
+bool ariel::MagicalContainer::AscendingIterator::operator>(const ariel::MagicalContainer::AscendingIterator other) const
 {
     if(this->container_==other.container_){
         return it_ > other.it_;
@@ -152,7 +168,7 @@ bool ariel::MagicalContainer::AscendingIterator::operator>(const ariel::MagicalC
     
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator<=(const ariel::MagicalContainer::AscendingIterator &other) const
+bool ariel::MagicalContainer::AscendingIterator::operator<=(const ariel::MagicalContainer::AscendingIterator other) const
 {
     if(this->container_==other.container_){
         return it_ <= other.it_;
@@ -162,7 +178,7 @@ bool ariel::MagicalContainer::AscendingIterator::operator<=(const ariel::Magical
     
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator>=(const ariel::MagicalContainer::AscendingIterator &other) const
+bool ariel::MagicalContainer::AscendingIterator::operator>=(const ariel::MagicalContainer::AscendingIterator other) const
 {   
     if(this->container_==other.container_){
         return it_ >= other.it_;
@@ -177,10 +193,13 @@ ariel::MagicalContainer::AscendingIterator &ariel::MagicalContainer::AscendingIt
     return *this;
 }
 
-ariel::MagicalContainer::AscendingIterator &ariel::MagicalContainer::AscendingIterator::end(){
+
+ariel::MagicalContainer::AscendingIterator ariel::MagicalContainer::AscendingIterator::end(){
     // cout << "in end func:" << **(sortedContainer_->end()-1)<< endl;
-    it_=sortedContainer_->end();
-    return *this;
+    // MagicalContainer::AscendingIterator asc(*this);
+    // asc.it_=asc.sortedContainer_->end();
+    // it_=sortedContainer_->end();
+    return AscendingIterator(*this, sortedContainer_->end()-1);
 }
 
 void ariel::MagicalContainer::AscendingIterator::addElement(int data)

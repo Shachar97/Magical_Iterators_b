@@ -27,6 +27,7 @@ namespace ariel{
 
     public:
         AscendingIterator(MagicalContainer& container);
+        explicit AscendingIterator(const AscendingIterator& other, vector<int *>::iterator it);
 
         AscendingIterator& operator=(const AscendingIterator& other);
 
@@ -50,23 +51,23 @@ namespace ariel{
 
     AscendingIterator operator--(int);
 
-    bool operator==(const AscendingIterator& other) const;
+    bool operator==(const AscendingIterator &other) const;
 
-    bool operator!=(const AscendingIterator& other) const;
+    bool operator!=(const AscendingIterator &other) const;
 
-    bool operator<(const AscendingIterator& other) const;
+    bool operator<(const AscendingIterator other) const;
 
-    bool operator>(const AscendingIterator& other) const;
+    bool operator>(const AscendingIterator other) const;
     
-    bool operator<=(const AscendingIterator& other) const;
+    bool operator<=(const AscendingIterator other) const;
 
-    bool operator>=(const AscendingIterator& other) const;
+    bool operator>=(const AscendingIterator other) const;
 
 
 
     AscendingIterator& begin();
 
-    AscendingIterator& end();
+    AscendingIterator end();
 
     void addElement(int data);
 
