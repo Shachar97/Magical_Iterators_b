@@ -1799,3 +1799,33 @@ bool compareByValue(const int* a, const int* b) {
 
 
 #endif
+
+
+
+// MagicalContainer::AscendingIterator::AscendingIterator(const MagicalContainer::AscendingIterator& other, std::vector<int*>::iterator it)
+//     : container_(other.container_) {
+
+//     sortedContainer_ = new std::vector<int*>(*other.sortedContainer_);
+//     // cout<<"it: "<<*it<<endl;
+//     this->itPos_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *it);
+//     // cout<<"it: "<<*it<<endl;
+// }
+
+    // int* p_end = sortedContainer_->back();
+
+    // //remove the p_end from the sortedContainer_
+    // sortedContainer_->pop_back();
+
+    // //add the p_data to the sortedContainer_
+    // sortedContainer_->push_back(p_data);
+
+    // //add the p_end to the sortedContainer_
+    // sortedContainer_->push_back(p_end);
+
+    // //sort the addresses by value of the elements holds
+    // sort(sortedContainer_->begin(), sortedContainer_->end()-1,compareByValue);
+
+    // //initial itPos to the iterator that points to pos_val
+    // if(*itPos_ != pos_val){
+    //     itPos_ = find(sortedContainer_->begin(), sortedContainer_->end(), pos_val);
+    // }

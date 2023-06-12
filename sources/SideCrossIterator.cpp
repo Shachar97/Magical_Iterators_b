@@ -9,174 +9,254 @@ using namespace std;
 
 namespace ariel{
 
-        ariel::MagicalContainer::SideCrossIterator::SideCrossIterator(ariel::MagicalContainer &container): container_(container)
-        {
-            if(container_.size()!=0){
+MagicalContainer::SideCrossIterator::SideCrossIterator(MagicalContainer &container)
+    : container_(container),sidedContainer_(new vector<int *> )
+{
+    container_.sideIterators.push_back(this);
+    if(container_.size()!=0){
 
-                for(auto over_container=container_.begin(); over_container != container_.end(); ++over_container){
-                    sidedContainer_.push_back(&(*over_container));
-                }   
-                    
-                sort(sidedContainer_.begin(),sidedContainer_.end(),compareByValue);
+        for(auto over_container=container_.begin(); over_container != container_.end(); ++over_container){
+            sidedContainer_->push_back(&(*over_container));
+        }   
 
-                    
-                // Initialize the iterators
-                it_ = sidedContainer_.begin();
+        sidedContainer_->push_back(&(*container_.end()));
+        sort(sidedContainer_->begin(),sidedContainer_->end()-1,compareByValue);
 
-                auto temp =sidedContainer_;
-                    
-                auto st = temp.begin();
-                auto en = temp.end() - 1;
-                while (st < en) {
-
-                    /*add min val*/
-                    *it_=*st;
-                    ++it_;
-
-                    /*add max val*/
-                    *it_=*en;
-                    ++it_;
-
-                    /*promote st & en*/
-                    ++st;
-                    --en;
-                }
-
-                // Handle the middle element for odd-sized containers
-                if (st == en) {
-                    *it_=*st;
-                    ++it_;
-                }
-        
-                // Reset the iterator position to the beginning
-                it_ = sidedContainer_.begin();
-            }
-        }
-
-        ariel::MagicalContainer::SideCrossIterator &ariel::MagicalContainer::SideCrossIterator::operator=(const ariel::MagicalContainer::SideCrossIterator &other) {
-            if (this != &other) {
-                this->container_=other.container_;
-                this->sidedContainer_=other.sidedContainer_;
-                this->it_=other.it_;
-            }
-            return *this;
-        }
-
-        ariel::MagicalContainer::SideCrossIterator::SideCrossIterator(const ariel::MagicalContainer::SideCrossIterator &other):container_(other.container_),sidedContainer_(other.sidedContainer_),it_(other.it_){
-        }
-
-
-        ariel::MagicalContainer::SideCrossIterator::~SideCrossIterator(){
-        }
-
-        int ariel::MagicalContainer::SideCrossIterator::operator*() const {
-            return *(*it_);
-        }
-
-        ariel::MagicalContainer::SideCrossIterator &ariel::MagicalContainer::SideCrossIterator::operator++(){
-            if(it_==sidedContainer_.end()){
-                throw runtime_error("S operator++: out of bound");
-            }
-            ++(it_);
-            return *this;
-        }
             
-        ariel::MagicalContainer::SideCrossIterator ariel::MagicalContainer::SideCrossIterator::operator++(int){
-            if(it_==sidedContainer_.end()){
-                throw runtime_error("S operator++: out of bound");
-            }
-            SideCrossIterator temp(*this);
-            ++(it_);
-            return temp;
-        }
+        // Initialize the iterators
+        itPos_ = sidedContainer_->begin();
 
-        ariel::MagicalContainer::SideCrossIterator &ariel::MagicalContainer::SideCrossIterator::operator--(){
+        auto temp =*sidedContainer_;
             
-            if(it_==sidedContainer_.begin()){
-                throw runtime_error("S operator--: out of bound");
-            }
+        auto st = temp.begin();
+        auto en = temp.end() - 2;
+        while (st < en) {
 
-            --(it_);
-            return *this;
+            /*add min val*/
+            *itPos_=*st;
+            ++itPos_;
+
+            /*add max val*/
+            *itPos_=*en;
+            ++itPos_;
+
+            /*promote st & en*/
+            ++st;
+            --en;
         }
+
+        // Handle the middle element for odd-sized containers
+        if (st == en) {
+            *itPos_=*st;
+        }
+
+        // Reset the iterator position to the beginning
+        itPos_ = sidedContainer_->begin();
+
+    }else{//no elements in the container
+        sidedContainer_->push_back(&(*container_.end()));
+        itPos_ = sidedContainer_->begin();
+    }
+}
+
+MagicalContainer::SideCrossIterator &MagicalContainer::SideCrossIterator::operator=(const MagicalContainer::SideCrossIterator &other)
+{
+    if (this != &other) {
+
+        if(container_ !=other.container_){
+            throw runtime_error("A operator=: container_ and other.container_ are not the same");    
+        }
+
+        delete sidedContainer_;
+
+        sidedContainer_ = new vector<int *>;
+
+        for( itPos_ =other.sidedContainer_->begin(); itPos_ != other.sidedContainer_->end(); ++itPos_){
+            sidedContainer_->push_back(*itPos_);
+        }
+
+        // itPos_=other.itPos_;
+        itPos_ =find(sidedContainer_->begin(),sidedContainer_->end(),*(other.itPos_));
+    }
+    return *this;
+}
+
+MagicalContainer::SideCrossIterator::SideCrossIterator(const MagicalContainer::SideCrossIterator &other)
+    :container_(other.container_),sidedContainer_(new vector<int *> )
+{
+    container_.sideIterators.push_back(this);
+    for( itPos_ =other.sidedContainer_->begin(); itPos_ != other.sidedContainer_->end(); ++itPos_){
+            sidedContainer_->push_back(*itPos_);
+    }
+    // itPos_=other.itPos_;
+    itPos_ =find(sidedContainer_->begin(),sidedContainer_->end(),*(other.itPos_));
+}
+
+
+MagicalContainer::SideCrossIterator::~SideCrossIterator(){
+    delete sidedContainer_;
+    
+    auto it = find(container_.sideIterators.begin(),container_.sideIterators.end(),this);
+
+    if(it!=container_.sideIterators.end()){
+        container_.sideIterators.erase(it);
+        // cout<<"delete S"<<endl;
+    }
+}
+
+int MagicalContainer::SideCrossIterator::operator*() const {
+    return *(*itPos_);
+}
+
+MagicalContainer::SideCrossIterator &MagicalContainer::SideCrossIterator::operator++(){
+    if(itPos_==sidedContainer_->end()-1){
+        throw runtime_error("S operator++: out of bound");
+    }
+    ++(itPos_);
+    return *this;
+}
+    
+MagicalContainer::SideCrossIterator MagicalContainer::SideCrossIterator::operator++(int){
+    if(itPos_==sidedContainer_->end()-1){
+        throw runtime_error("S operator++: out of bound");
+    }
+    SideCrossIterator temp(*this);
+    ++(itPos_);
+    return temp;
+}
+
+MagicalContainer::SideCrossIterator &MagicalContainer::SideCrossIterator::operator--(){
+    
+    if(itPos_==sidedContainer_->begin()){
+        throw runtime_error("S operator--: out of bound");
+    }
+
+    --(itPos_);
+    return *this;
+}
+    
+MagicalContainer::SideCrossIterator MagicalContainer::SideCrossIterator::operator--(int)
+{
+
+    if(itPos_==sidedContainer_->begin()){
+        throw runtime_error("S operator--: out of bound");
+    }
+
+    SideCrossIterator temp (*this);
+    --(itPos_);
+    return temp;
+}
+
+bool MagicalContainer::SideCrossIterator::operator==(const MagicalContainer::SideCrossIterator other) const
+{
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator==: containers are not the same");
+    }
+    // cout<<"S operator=="<<endl;
+    return *itPos_ == *other.itPos_;
+}
+
+bool MagicalContainer::SideCrossIterator::operator!=(const MagicalContainer::SideCrossIterator other) const
+{
+    // cout<<"S operator!="<<endl;
+    // cout<<*itPos_<<" "<<*other.itPos_<<endl;
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator!=: containers are not the same");
+    }
+    return *itPos_ != *other.itPos_;
+}
+
+bool MagicalContainer::SideCrossIterator::operator<(const MagicalContainer::SideCrossIterator other) const{
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator<: containers are not the same");
+    }
+    return *itPos_ < *other.itPos_;
+}
+
+bool MagicalContainer::SideCrossIterator::operator>(const MagicalContainer::SideCrossIterator other) const{
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator>: containers are not the same");
+    }
+    return *itPos_ > *other.itPos_;
+}
+
+bool MagicalContainer::SideCrossIterator::operator<=(const MagicalContainer::SideCrossIterator other) const{
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator<=: containers are not the same");
+    }
+    return *itPos_ <= *other.itPos_;
+}
+
+bool MagicalContainer::SideCrossIterator::operator>=(const MagicalContainer::SideCrossIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator>=: containers are not the same");
+    }
+    return *itPos_ >= *other.itPos_;
+}
+
+MagicalContainer::SideCrossIterator MagicalContainer::SideCrossIterator::begin(){
+    SideCrossIterator temp(*this);
+    temp.itPos_=sidedContainer_->begin();
+    return temp;
+}
+MagicalContainer::SideCrossIterator MagicalContainer::SideCrossIterator::end(){
+    SideCrossIterator temp(*this);
+    temp.itPos_=sidedContainer_->end()-1;
+    return temp;
+}
+
+void MagicalContainer::SideCrossIterator::addElement(){
+
+    int *data= &container_.container_.back();
+    int *p_end= sidedContainer_->back();
+    int *pos=*itPos_;
+    sidedContainer_->pop_back();
+    sidedContainer_->push_back(data);
+    sidedContainer_->push_back(p_end);
+    sort(sidedContainer_->begin(),sidedContainer_->end()-1,compareByValue);
+
+    itPos_ = sidedContainer_->begin();
+
+        auto temp =*sidedContainer_;
             
-        ariel::MagicalContainer::SideCrossIterator ariel::MagicalContainer::SideCrossIterator::operator--(int)
-        {
+        auto st = temp.begin();
+        auto en = temp.end() - 2;
+        while (st < en) {
 
-            if(it_==sidedContainer_.begin()){
-                throw runtime_error("S operator--: out of bound");
-            }
+            /*add min val*/
+            *itPos_=*st;
+            ++itPos_;
 
-            SideCrossIterator temp (*this);
-            --(it_);
-            return temp;
+            /*add max val*/
+            *itPos_=*en;
+            ++itPos_;
+
+            /*promote st & en*/
+            ++st;
+            --en;
         }
 
-        bool ariel::MagicalContainer::SideCrossIterator::operator==(const ariel::MagicalContainer::SideCrossIterator &other) const
-        {
-            cout<<"S operator=="<<endl;
-            return it_ == other.it_;
+        // Handle the middle element for odd-sized containers
+        if (st == en) {
+            *itPos_=*st;
         }
 
-        bool ariel::MagicalContainer::SideCrossIterator::operator!=(const ariel::MagicalContainer::SideCrossIterator &other) const
-        {
-            cout<<"S operator!="<<endl;
-            cout<<*it_<<" "<<*other.it_<<endl;
-            return !(it_ == other.it_);
-        }
+        auto it=sidedContainer_->end()-1;
+        *it=&(*container_.end());
 
-        bool ariel::MagicalContainer::SideCrossIterator::operator<(const ariel::MagicalContainer::SideCrossIterator &other) const{
-            return it_ < other.it_;
-        }
+        itPos_=find(sidedContainer_->begin(),sidedContainer_->end(),pos);
+}
 
-        bool ariel::MagicalContainer::SideCrossIterator::operator>(const ariel::MagicalContainer::SideCrossIterator &other) const{
-            return it_ > other.it_;
-        }
+void MagicalContainer::SideCrossIterator::removeElement(int* pdata){
+    // cout<<"S removeElement = "<<*pdata<<endl;
+    auto it = find(sidedContainer_->begin(),sidedContainer_->end(),pdata);
+    if(it!=sidedContainer_->end()){
+        sidedContainer_->erase(it);
+    }else{
+        throw runtime_error("S not exist element");
+    }
+}
 
-        bool ariel::MagicalContainer::SideCrossIterator::operator<=(const ariel::MagicalContainer::SideCrossIterator &other) const{
-            return it_ <= other.it_;
-        }
 
-        bool ariel::MagicalContainer::SideCrossIterator::operator>=(const ariel::MagicalContainer::SideCrossIterator &other) const {
-            return it_ >= other.it_;
-        }
 
-        ariel::MagicalContainer::SideCrossIterator &ariel::MagicalContainer::SideCrossIterator::begin(){
-            it_=sidedContainer_.begin();
-            return *this;
-        }
-        ariel::MagicalContainer::SideCrossIterator &ariel::MagicalContainer::SideCrossIterator::end(){
-            cout<<"S in end"<<endl;
-            it_=sidedContainer_.end();
-            return *this;
-        }
-
-        void ariel::MagicalContainer::SideCrossIterator::addElement(int data){/*TODO*/
-            // if(sideIter_->size()==0){
-            //     sideIter_->push_back(data);
-            // }else{
-            //     bool flag = true;
-            //     auto it = sideIter_->begin();
-            //     while(it != sideIter_->end()){
-            //         if(flag){
-            //             if(data<*it){
-            //                 /*INSERT DATA*/
-            //                 sideIter_->insert(it,data);
-            //                 return;
-            //             }
-            //             flag = false;
-            //             ++it;
-            //         }else{
-            //             if(data>*it){
-            //                 /*INSERT DATA*/
-            //                 sideIter_->insert(it,data);
-            //                 return;
-            //             }
-            //             flag = true;
-            //             ++it;
-            //         }
-            //     }
-            //     sideIter_->push_back(data);
-            // }
-        }
 }

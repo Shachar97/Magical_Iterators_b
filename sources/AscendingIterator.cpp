@@ -10,68 +10,64 @@ using namespace std;
 namespace ariel{
 
 
-ariel::MagicalContainer::AscendingIterator::AscendingIterator(ariel::MagicalContainer &container): container_(container) {
-    sortedContainer_= new std::vector<int *>();
+MagicalContainer::AscendingIterator::AscendingIterator(MagicalContainer &container)
+    :container_(container),sortedContainer_(new std::vector<int *>())
+{
+    container_.ascIterators.push_back(this);
     if(container.size() != 0){
         for(auto over_container=container_.begin(); over_container != container_.end(); ++over_container){
             sortedContainer_->push_back(&(*over_container));
         }
-        sortedContainer_->push_back(&(*container_.end()));
-        
+    }
+        /*hold in last position address of container_.end()*/
+        sortedContainer_->push_back(&(*container_.end())); 
+
+        /*sort the addresses by value of the elements holds*/
         sort(sortedContainer_->begin(), sortedContainer_->end()-1,compareByValue);
-        // for(auto over_container=sortedContainer_->begin(); over_container!= sortedContainer_->end(); ++over_container){
-        //     cout << **over_container << endl;
-        // }
-    }
-    it_ = sortedContainer_->begin();
-    // cout<<**it_;
-    cout << "@@@@@@@@@@@"<<endl;
+
+        /*initial itPos to the beginning*/
+        itPos_ = sortedContainer_->begin();
 }
 
-ariel::MagicalContainer::AscendingIterator::AscendingIterator(const ariel::MagicalContainer::AscendingIterator& other)
-    : container_(other.container_) {
-        cout <<"in copy constructor"<<endl;
-    // sortedContainer_ = new std::vector<int*>(*other.sortedContainer_);
-    sortedContainer_ = new std::vector<int*>;
-    for(it_=other.sortedContainer_->begin(); it_!= other.sortedContainer_->end(); ++it_){
-        sortedContainer_->push_back(*it_);
+MagicalContainer::AscendingIterator::AscendingIterator(const MagicalContainer::AscendingIterator& other)
+    : container_(other.container_),sortedContainer_(new vector<int *>()) 
+{        
+    container_.ascIterators.push_back(this);
+
+    for(itPos_=other.sortedContainer_->begin(); itPos_!= other.sortedContainer_->end(); ++itPos_){
+        sortedContainer_->push_back(*itPos_);
     }
-    it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *(other.it_));
+    itPos_ = find(sortedContainer_->begin(), sortedContainer_->end(), *(other.itPos_));
     // it_=other.it_;
-    cout<<*sortedContainer_->end()<<" , "<<*other.sortedContainer_->end()<<endl;
-    cout << "@@@@@@@@@@@"<<endl;
-}
-
-ariel::MagicalContainer::AscendingIterator::AscendingIterator(const AscendingIterator& other, std::vector<int*>::iterator it)
-    : container_(other.container_) {
-    sortedContainer_ = new std::vector<int*>(*other.sortedContainer_);
-    cout<<"it: "<<*it<<endl;
-    this->it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *it);
-    cout<<"it: "<<*it<<endl;
 }
 
 
 
-ariel::MagicalContainer::AscendingIterator::~AscendingIterator()
+MagicalContainer::AscendingIterator::~AscendingIterator()
 {
     delete sortedContainer_;
+    auto pos = find(container_.ascIterators.begin(), container_.ascIterators.end(), this);
+    if(pos!= container_.ascIterators.end()){
+        container_.ascIterators.erase(pos);
+        // cout<<"delete AscendingIterator"<<endl;
+    }
 }
 
-ariel::MagicalContainer::AscendingIterator& ariel::MagicalContainer::AscendingIterator::operator=(const ariel::MagicalContainer::AscendingIterator& other) {
-    cout << "in operator=" << endl;
+MagicalContainer::AscendingIterator& MagicalContainer::AscendingIterator::operator=(const MagicalContainer::AscendingIterator& other) {
+    // cout << "in operator=" << endl;
     if (this != &other) {
-        container_ = other.container_;
+        if(container_ !=other.container_){
+            throw runtime_error("A operator=: container_ and other.container_ are not the same");    
+        }
 
         delete sortedContainer_;
 
-        sortedContainer_ = new std::vector<int*>;
-        for(it_=other.sortedContainer_->begin(); it_!= other.sortedContainer_->end(); ++it_){
-            sortedContainer_->push_back(*it_);
+        sortedContainer_ = new vector<int*>;
+        for(itPos_=other.sortedContainer_->begin(); itPos_!= other.sortedContainer_->end(); ++itPos_){
+            sortedContainer_->push_back(*itPos_);
         }
-        // it_ = std::find(sortedContainer_->begin(), sortedContainer_->end(), *(other.it_));
-        it_=other.it_;
-        
-
+        // it_ = find(sortedContainer_->begin(), sortedContainer_->end(), *(other.it_));
+        itPos_=other.itPos_;
         
     }
 
@@ -79,164 +75,160 @@ ariel::MagicalContainer::AscendingIterator& ariel::MagicalContainer::AscendingIt
 }
 
 
-int ariel::MagicalContainer::AscendingIterator::operator*() const
+int MagicalContainer::AscendingIterator::operator*() const
 {
-    cout << "in operator*" << endl;
-    return **(this->it_);
+    return **(this->itPos_);
 }
 
-ariel::MagicalContainer::AscendingIterator &ariel::MagicalContainer::AscendingIterator::operator++()
+MagicalContainer::AscendingIterator &MagicalContainer::AscendingIterator::operator++()
 {
-    cout << "in operator++" << endl;
-    if( it_== sortedContainer_->end() ){
+    if( itPos_== sortedContainer_->end()-1 ){
         throw runtime_error("A operator++: out of bound");
     }
-    ++it_;
+    ++itPos_;
     return *this;
 }
 
-ariel::MagicalContainer::AscendingIterator ariel::MagicalContainer::AscendingIterator::operator++(int)
+MagicalContainer::AscendingIterator MagicalContainer::AscendingIterator::operator++(int)
 {   
-    cout<<"in operator++"<<endl;
-    if(it_==sortedContainer_->end()){
+    if(itPos_==sortedContainer_->end()-1){
         throw runtime_error("A operator++: out of bound");
     }
     AscendingIterator temp(*this);
-    ++(it_);
+    // AscendingIterator(*this, itPos_+1);
+    ++(itPos_);
     return temp;
 }
 
-ariel::MagicalContainer::AscendingIterator &ariel::MagicalContainer::AscendingIterator::operator--()
+MagicalContainer::AscendingIterator &MagicalContainer::AscendingIterator::operator--()
 {
-    cout<<"in operator--"<<endl;
-    if(it_<=sortedContainer_->begin()){
+    // cout<<"in operator--"<<endl;
+    if(itPos_==sortedContainer_->begin()){
         throw runtime_error("A operator--: out of bound");
     }
-    --(it_);
+    --(itPos_);
     return *this;
 }
 
-ariel::MagicalContainer::AscendingIterator ariel::MagicalContainer::AscendingIterator::operator--(int)
+MagicalContainer::AscendingIterator MagicalContainer::AscendingIterator::operator--(int)
 {
-    cout<<"in operator--"<<endl;
-    if(it_<=sortedContainer_->begin()){
+    // cout<<"in operator--"<<endl;
+    if(itPos_<=sortedContainer_->begin()){
         throw runtime_error("A operator--: out of bound");
     }
     AscendingIterator temp(*this);
-    --(it_);
+    // AscendingIterator(*this, itPos_-1);
+    --(itPos_);
     return temp;
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator==(const ariel::MagicalContainer::AscendingIterator &other) const
+bool MagicalContainer::AscendingIterator::operator==(const MagicalContainer::AscendingIterator other) const
 {
-    cout << "A in operator==" << endl;
+    // cout << "A in operator==" << endl;
     if(this->container_==other.container_){
-        cout << *(this->it_) << " ? " << *(other.it_) << endl;
-        return *(this->it_) == *(other.it_);
+        // cout << *(this->itPos_) << " ? " << *(other.itPos_) << endl;
+        return *(this->itPos_) == *(other.itPos_);
     }else{
         throw runtime_error("A operator==: not the same container");
     }
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator!=(const ariel::MagicalContainer::AscendingIterator& other) const {
-    cout<<"A in operator!="<<endl;
+bool MagicalContainer::AscendingIterator::operator!=(const MagicalContainer::AscendingIterator other) const {
+    // cout<<"A in operator!="<<endl;
     if (this->container_ == other.container_) {
-        // cout << *(this->it_) << " ? " << *(other.it_) << endl;
-        return *it_ != *other.it_;
+        // cout << *(this->itPos_) << " ? " << *(other.itPos_) << endl;
+        return *itPos_ != *other.itPos_;
     } else {
         throw runtime_error("A operator!=: not the same container");
     }
 }
 
 
-bool ariel::MagicalContainer::AscendingIterator::operator<(const ariel::MagicalContainer::AscendingIterator other) const
+bool MagicalContainer::AscendingIterator::operator<(const MagicalContainer::AscendingIterator other) const
 {
     if(this->container_==other.container_){
-        return it_ < other.it_;
+        return *itPos_ < *other.itPos_;
     }else{
         throw runtime_error("A operator<: not the same container");
     }
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator>(const ariel::MagicalContainer::AscendingIterator other) const
+bool MagicalContainer::AscendingIterator::operator>(const MagicalContainer::AscendingIterator other) const
 {
     if(this->container_==other.container_){
-        return it_ > other.it_;
+        return *itPos_ > *other.itPos_;
     }else{
         throw runtime_error("A operator>: not the same container");
     }
     
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator<=(const ariel::MagicalContainer::AscendingIterator other) const
+bool MagicalContainer::AscendingIterator::operator<=(const MagicalContainer::AscendingIterator other) const
 {
     if(this->container_==other.container_){
-        return it_ <= other.it_;
+        return *itPos_ <= *other.itPos_;
     }else{
         throw runtime_error("A operator<=: not the same container");
     }
     
 }
 
-bool ariel::MagicalContainer::AscendingIterator::operator>=(const ariel::MagicalContainer::AscendingIterator other) const
+bool MagicalContainer::AscendingIterator::operator>=(const MagicalContainer::AscendingIterator other) const
 {   
     if(this->container_==other.container_){
-        return it_ >= other.it_;
+        return *itPos_ >= *other.itPos_;
     }else{
         throw runtime_error("A operator>=: not the same container");
     }
     
 }   
 
-ariel::MagicalContainer::AscendingIterator &ariel::MagicalContainer::AscendingIterator::begin(){
-    it_=sortedContainer_->begin();
-    return *this;
+MagicalContainer::AscendingIterator MagicalContainer::AscendingIterator::begin(){
+    // return AscendingIterator(*this, sortedContainer_->begin());
+    AscendingIterator temp(*this);
+    temp.itPos_=sortedContainer_->begin();
+    return temp;
 }
 
 
-ariel::MagicalContainer::AscendingIterator ariel::MagicalContainer::AscendingIterator::end(){
-    // cout << "in end func:" << **(sortedContainer_->end()-1)<< endl;
-    // MagicalContainer::AscendingIterator asc(*this);
-    // asc.it_=asc.sortedContainer_->end();
-    // it_=sortedContainer_->end();
-    return AscendingIterator(*this, sortedContainer_->end()-1);
+MagicalContainer::AscendingIterator MagicalContainer::AscendingIterator::end(){
+    // return AscendingIterator(*this, sortedContainer_->end()-1);
+    AscendingIterator temp(*this);
+    temp.itPos_=sortedContainer_->end()-1;
+    return temp;
 }
 
-void ariel::MagicalContainer::AscendingIterator::addElement(int data)
+void MagicalContainer::AscendingIterator::addElement()
 {
-    // if(it_==nullptr){
-    //     it_ = new vector<int>::iterator;
-    //     **it_=data;
-    //     begin_=*it_;
-    //     ++(*it_);
-    //     end_=*it_;
-    //     *it_=begin_;
-    //     return;
-    // }
-    // if(data < *begin_){
-    //     --begin_;
-    //     *begin_=data;
-    // }else if(data > *(end_-1)){
-    //     *end_=data;
-    //     ++end_;
-    // }else{
-    //     vector<int>::iterator temp_1;
-    //     temp_1=begin_;
-    //     while(data>*temp_1){
-    //         ++temp_1;
-    //     }
-        
-    //     int temp_2;
-    //     while(temp_1 != end_){
-    //         temp_2=*temp_1;
-    //         *temp_1=data;
-    //         data=temp_2;
-    //         ++temp_1;
-    //     }
-    //     *end_=data;
-    //     ++end_;
+    
+    int *pos= *itPos_;
+    
+    int *newElement = &container_.container_.back();
+    
+    
+    auto it = sortedContainer_->begin();
+    while(it!= sortedContainer_->end()-1 && **it < *newElement){
+        ++it;
+    }
+    
+    sortedContainer_->insert(it, newElement);
+    it=sortedContainer_->end()-1;
+    *it=&(*container_.end());
 
-    // }
+    itPos_=find(sortedContainer_->begin(), sortedContainer_->end(), pos);
+
+    
+}
+
+
+
+void MagicalContainer::AscendingIterator::removeElement(int * pdata){
+    auto pos = find(sortedContainer_->begin(), sortedContainer_->end(), pdata);
+    if(pos!= sortedContainer_->end()){
+        sortedContainer_->erase(pos);
+    }else{
+        throw runtime_error("A not exist element");
+    }
 }
 
 }

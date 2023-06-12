@@ -10,141 +10,192 @@ using namespace std;
 namespace ariel{
 
 
-ariel::MagicalContainer::PrimeIterator::PrimeIterator(ariel::MagicalContainer &container): container_(container)
+MagicalContainer::PrimeIterator::PrimeIterator(MagicalContainer &container)
+    : container_(container), primeContainer_(new vector<int *>)
 {
-    cout<<"the container:"<<endl;
-    for (auto over_container=container.begin(); over_container != container.end(); ++over_container)
-    {
-        cout<<*over_container<<", ";
-    }
-    for (auto it = container.begin(); it != container.end(); ++it)
-    {
-        if (isPrime(*it))
+    container_.primeIterators.push_back(this);
+    if(container_.container_.size() != 0){
+        for (auto it = container.begin(); it != container.end(); ++it)
         {
-            primeContainer_.push_back(*it);
-        }
+            if (isPrime(*it))
+            {
+                primeContainer_->push_back(&(*it));
+            }
+        }    
     }
-    cout<<"the container:"<<endl;
-    for (auto over_container=container.begin(); over_container != container.end(); ++over_container)
-    {
-        cout<<*over_container<<", ";
-    }
-
+    primeContainer_->push_back(&(*container_.container_.end()));
     // Sort the primedMagic_ vector
-    sort(primeContainer_.begin(), primeContainer_.end());
+    sort(primeContainer_->begin(), primeContainer_->end()-1,compareByValue);
 
     // Initialize the iterator
-    it_ = primeContainer_.begin();
+    itPos_ = primeContainer_->begin();
 }
 
 
-    ariel::MagicalContainer::PrimeIterator &ariel::MagicalContainer::PrimeIterator::operator=(const ariel::MagicalContainer::PrimeIterator &other) {
-        if (this != &other) {
-            this->container_ = other.container_;
-            this->primeContainer_ = other.primeContainer_;
-            this->it_=other.it_;
-        }
-        return *this;
-    }
+MagicalContainer::PrimeIterator &MagicalContainer::PrimeIterator::operator=(const MagicalContainer::PrimeIterator &other)
+{
+    if (this != &other) {
 
-    ariel::MagicalContainer::PrimeIterator::PrimeIterator(const ariel::MagicalContainer::PrimeIterator &other):container_(other.container_),primeContainer_(other.primeContainer_),it_(other.it_){
-    }
-
-    ariel::MagicalContainer::PrimeIterator::~PrimeIterator(){
-    }
-
-    int ariel::MagicalContainer::PrimeIterator::operator*() const
-    {
-        return *(it_);
-    }
-
-    ariel::MagicalContainer::PrimeIterator &ariel::MagicalContainer::PrimeIterator::operator++(){
-
-        if(it_>=primeContainer_.end()){
-            throw runtime_error("operator++: out of bound");
-        }
-        ++(it_);
-        return *this;
-    }
-            
-    ariel::MagicalContainer::PrimeIterator ariel::MagicalContainer::PrimeIterator::operator++(int){
-
-        if(it_>=primeContainer_.end()){
-            throw runtime_error("operator++: out of bound");
+        if(container_ !=other.container_){
+            throw runtime_error("A operator=: container_ and other.container_ are not the same");    
         }
 
-        PrimeIterator temp(*this);
-        ++(it_);
-        return temp;
-    }
+        delete this->primeContainer_;
+        this->primeContainer_= new vector<int *>;
 
-ariel::MagicalContainer::PrimeIterator &ariel::MagicalContainer::PrimeIterator::operator--() {
-    if(it_<=primeContainer_.begin()){
-        throw runtime_error("operator--: out of bound");
+        for (auto it = other.primeContainer_->begin(); it != other.primeContainer_->end(); ++it){
+            this->primeContainer_->push_back(*it);
+        }
+
+        itPos_=find(primeContainer_->begin(),primeContainer_->end(),*other.itPos_);
     }
-    --(it_);
     return *this;
 }
-    
-ariel::MagicalContainer::PrimeIterator ariel::MagicalContainer::PrimeIterator::operator--(int){
-    if(it_<=primeContainer_.begin()){
+
+MagicalContainer::PrimeIterator::PrimeIterator(const MagicalContainer::PrimeIterator &other)
+    :container_(other.container_),primeContainer_(new vector<int *>)
+{
+    container_.primeIterators.push_back(this);
+
+    for (auto it = other.primeContainer_->begin(); it != other.primeContainer_->end(); ++it){
+        this->primeContainer_->push_back(*it);
+    }
+    itPos_=find(primeContainer_->begin(),primeContainer_->end(),*other.itPos_);
+}
+
+MagicalContainer::PrimeIterator::~PrimeIterator(){
+    delete primeContainer_;
+    auto it = find(container_.primeIterators.begin(),container_.primeIterators.end(),this);
+    if(it != container_.primeIterators.end()){
+        container_.primeIterators.erase(it);
+        // cout<<"delete P"<<endl;
+    }
+}
+
+int MagicalContainer::PrimeIterator::operator*() const
+{
+    return *(*itPos_);
+}
+
+MagicalContainer::PrimeIterator &MagicalContainer::PrimeIterator::operator++(){
+
+    if(itPos_==primeContainer_->end()-1){
+        throw runtime_error("operator++: out of bound");
+    }
+    ++(itPos_);
+    return *this;
+}
+        
+MagicalContainer::PrimeIterator MagicalContainer::PrimeIterator::operator++(int){
+
+    if(itPos_==primeContainer_->end()-1){
+        throw runtime_error("operator++: out of bound");
+    }
+
+    PrimeIterator temp(*this);
+    ++(itPos_);
+    return temp;
+}
+
+MagicalContainer::PrimeIterator &MagicalContainer::PrimeIterator::operator--() {
+    if(itPos_==primeContainer_->begin()){
+        throw runtime_error("operator--: out of bound");
+    }
+    --(itPos_);
+    return *this;
+}
+
+MagicalContainer::PrimeIterator MagicalContainer::PrimeIterator::operator--(int){
+    if(itPos_==primeContainer_->begin()){
         throw runtime_error("operator--: out of bound");
     }
     PrimeIterator temp (*this);
-    --(it_);
+    --(itPos_);
     return temp;
 }
+
+
+bool MagicalContainer::PrimeIterator::operator==(const MagicalContainer::PrimeIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator==: containers are not the same");
+    }
+    return *itPos_ == *other.itPos_;
+}
+
+bool MagicalContainer::PrimeIterator::operator!=(const MagicalContainer::PrimeIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator!=: containers are not the same");
+    }
+    return *itPos_ != *other.itPos_;
+}
+
+bool MagicalContainer::PrimeIterator::operator<(const MagicalContainer::PrimeIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator<: containers are not the same");
+    }
+    return *itPos_ < *other.itPos_;
+}
+
+bool MagicalContainer::PrimeIterator::operator>(const MagicalContainer::PrimeIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator>: containers are not the same");
+    }
+    return *itPos_ > *other.itPos_;
+}
+
+bool MagicalContainer::PrimeIterator::operator<=(const MagicalContainer::PrimeIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator<=: containers are not the same");
+    }
+    return *itPos_ <= *other.itPos_;
+}
+
+bool MagicalContainer::PrimeIterator::operator>=(const MagicalContainer::PrimeIterator other) const {
+    if(this->container_ != other.container_){
+        throw runtime_error("S operator>=: containers are not the same");
+    }
+    return *itPos_ >= *other.itPos_;
+}
+
+MagicalContainer::PrimeIterator MagicalContainer::PrimeIterator::begin(){
+    PrimeIterator temp(*this);
+    temp.itPos_=primeContainer_->begin();
+    return temp;
+}
+MagicalContainer::PrimeIterator MagicalContainer::PrimeIterator::end(){
+    PrimeIterator temp(*this);
+    temp.itPos_=primeContainer_->end()-1;
+    return temp;
+}
+
+void MagicalContainer::PrimeIterator::addElement(){/*TODO*/
+    int *pos= *itPos_;
     
+    int *data = &container_.container_.back();
+    if(isPrime(*data)){
+        auto it = primeContainer_->begin();
+        while(it!= primeContainer_->end()-1 && **it < *data){
+            ++it;
+        }
+        
+        primeContainer_->insert(it, data);
+        it=primeContainer_->end()-1;
+        *it=&(*container_.end());
 
-    bool ariel::MagicalContainer::PrimeIterator::operator==(const ariel::MagicalContainer::PrimeIterator &other) const {
-        return it_ == other.it_;
+        itPos_=find(primeContainer_->begin(), primeContainer_->end(), pos);
     }
+}
 
-    bool ariel::MagicalContainer::PrimeIterator::operator!=(const ariel::MagicalContainer::PrimeIterator &other) const {
-        return !(*this == other);
+void MagicalContainer::PrimeIterator::removeElement(int* pdata){
+    if(isPrime(*pdata)){
+        // cout<<"P removeElement = "<<*pdata<<endl;
+        auto it = find(primeContainer_->begin(),primeContainer_->end(),pdata);
+        if(it!=primeContainer_->end()){
+            primeContainer_->erase(it);
+        }else{
+            throw runtime_error("P not exist element");
+        }
     }
+}
 
-    bool ariel::MagicalContainer::PrimeIterator::operator<(const ariel::MagicalContainer::PrimeIterator &other) const {
-        return it_ < other.it_;
-    }
-
-    bool ariel::MagicalContainer::PrimeIterator::operator>(const ariel::MagicalContainer::PrimeIterator &other) const {
-        return it_ > other.it_;
-    }
-
-    bool ariel::MagicalContainer::PrimeIterator::operator<=(const ariel::MagicalContainer::PrimeIterator &other) const {
-        return it_ <= other.it_;
-    }
-
-    bool ariel::MagicalContainer::PrimeIterator::operator>=(const ariel::MagicalContainer::PrimeIterator &other) const {
-        return it_ >= other.it_;
-    }
-
-    ariel::MagicalContainer::PrimeIterator &ariel::MagicalContainer::PrimeIterator::begin(){
-        it_=primeContainer_.begin();
-        return *this;
-    }
-    ariel::MagicalContainer::PrimeIterator &ariel::MagicalContainer::PrimeIterator::end(){
-        it_=primeContainer_.end();
-        return *this;
-    }
-
-    void ariel::MagicalContainer::PrimeIterator::addElement(int data){/*TODO*/
-        // if(isPrime(data)){
-        //     if(primeIter_->size()==0){
-        //         primeIter_->push_back(data);
-        //     }else{
-        //         auto it = primeIter_->begin();
-        //         while(it != primeIter_->end()){
-        //             if(data<*it){
-        //                 /*INSERT DATA*/
-        //                 primeIter_->insert(it,data);
-        //                 return;
-        //             }
-        //             ++it;
-        //         }
-        //         primeIter_->push_back(data);
-        //     }
-        // }
-    }
 }
