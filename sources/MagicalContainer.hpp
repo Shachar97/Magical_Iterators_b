@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include "prime.hpp"
+#include "helper_funcs.hpp"
 
 using namespace std;
 
